@@ -1,0 +1,49 @@
+<!doctype html>
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body { background-color: rgb(44, 44, 44); color: white; }
+span { font-size: 40px; position: relative}
+.neutral { color: white }
+.correct { color: green }
+.incorrect { color: red }
+@keyframes blink {
+  from, to {
+    background: transparent;
+  }
+  50% {
+    background: yellow;
+  }
+}
+.neutral.next::after {
+  content: "";
+  animation: 0.5s blink step-end infinite;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background-color: yellow;
+  height: 1px;
+  color: yellow;
+  bottom: 5px;
+}
+</style>
+</head>
+<body>
+  <div id="elm-area"></div>
+  <script src="elm.js"></script>
+  <script type="text/javascript">
+  fetch('/test.txt').then(res => res.text()).then(t => console.log(t))
+  window.onkeydown = function(event) {
+    if (event.keyCode == 8) {
+      //alert(event.target.tagName); //if you want to see how chrome handles keypresses not on an editable element
+      if (event.target.tagName == 'BODY') {
+        //alert("Prevented Navigation");
+        event.preventDefault();
+      }
+    }
+  }
+  </script>
+  <script> Elm.Typelm.embed(document.getElementById("elm-area"));</script>
+</body>
+</html>
