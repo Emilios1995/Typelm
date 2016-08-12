@@ -4,7 +4,7 @@
 <head>
 <style>
 body { background-color: rgb(44, 44, 44); color: white; }
-span { font-size: 40px; position: relative}
+span { font-size: 30px; position: relative}
 .neutral { color: white }
 .correct { color: green }
 .incorrect { color: red }
@@ -13,7 +13,7 @@ span { font-size: 40px; position: relative}
     background: transparent;
   }
   50% {
-    background: yellow;
+    background: orange;
   }
 }
 .neutral.next::after {
@@ -22,10 +22,8 @@ span { font-size: 40px; position: relative}
   position: absolute;
   left: 0;
   width: 100%;
-  background-color: yellow;
-  height: 1px;
-  color: yellow;
-  bottom: 5px;
+  height: 3px;
+  bottom: 4px;
 }
 </style>
 </head>
@@ -33,7 +31,6 @@ span { font-size: 40px; position: relative}
   <div id="elm-area"></div>
   <script src="elm.js"></script>
   <script type="text/javascript">
-  fetch('/test.txt').then(res => res.text()).then(t => console.log(t))
   window.onkeydown = function(event) {
     if (event.keyCode == 8) {
       //alert(event.target.tagName); //if you want to see how chrome handles keypresses not on an editable element
