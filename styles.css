@@ -1,0 +1,51 @@
+body { background-color: rgb(44, 44, 44); color: white; }
+span { font-size: 30px; position: relative}
+.neutral { color: white }
+.correct { color: green }
+.incorrect { color: red }
+@keyframes blink {
+  from, to {
+
+    background: orange;
+  }
+  50% {
+    background: transparent;
+  }
+}
+.neutral.next::after {
+  content: "";
+  animation: 0.5s blink step-end infinite;
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  bottom: 0px;
+}
+.elm-area {
+  max-width: 700px;
+  margin: auto;
+}
+
+.typelm-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.typelm-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+  font-size: 20px;
+  color: darkgray;
+  font-family: monospace;
+      align-items: center;
+}
+
+.typelm-text {
+  font-family: Courier;
+  line-height: 1.5;
+  letter-spacing: 2px;
+
+}

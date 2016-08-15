@@ -8,19 +8,32 @@ import Keyboard
 import Char
 import String
 import Debug exposing (log)
-import Maybe
 import Task
 import Http
 import Time exposing (Time, second)
 import Utils
 import Maybe.Extra exposing (isNothing)
+import TextFetch
+
+
+{- Overall strategy:
+   textByWords - the whole text, as List (List Char) where each inner list is a word
+   userText - what the user has typed in the current page. It is backwards, so we add new chars with :: (cons)
+   displayedText - the contents of the current page. it gets recalculated when the user has typed all of it
+
+   In the view, the two displayedText and userText are compared to identify right and wrong entries.
+-}
+--TODO: Store last page number for each text in the localStorage, So the user can continue where they left.
 
 
 type alias Model =
-    { text : List Char
+    { textByWords : List (List Char)
     , userText : List Char
+    , displayedText : List Char
+    , page : Int
     , wpm : Int
     , startTime : Maybe Time
+    , textFetch : TextFetch.Model
     }
 
 
@@ -31,11 +44,15 @@ type alias Model =
 type Msg
     = CharKeyMsg Keyboard.KeyCode
     | KeyMsg Keyboard.KeyCode
-    | FetchFail Http.Error
-    | FetchSucceed (List Char)
     | StartSucceed Time
     | StartFailed
     | Tick Time
+    | TurnPage
+    | TextFetchMsg TextFetch.Msg
+
+
+wordsPerPage =
+    20
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -45,24 +62,36 @@ update msg model =
             ( { model | userText = (Char.fromCode code) :: model.userText }
             , if isNothing model.startTime then
                 Task.perform (\_ -> StartFailed) StartSucceed Time.now
+              else if List.length model.userText == (List.length model.displayedText) then
+                -- The user has typed all the text on screen.
+                -- We need to wrap the call to update in a task to run it as a command.
+                Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TurnPage)
               else
                 Cmd.none
             )
 
         KeyMsg code ->
-            (if code == 8 then
-                -- code 8 corresponds to backspace
+            if code == 8 then
+                -- code 8 corresponds to backspace.
+                -- We remove the first item from the list, which is the last in the text, because userText is reversed
                 ( { model | userText = model.userText |> List.tail |> Maybe.withDefault [] }, Cmd.none )
-             else
+            else
                 ( model, Cmd.none )
+
+        TurnPage ->
+            ( { model
+                | page = model.page + 1
+                , displayedText =
+                    model.textByWords
+                        |> List.drop (model.page * wordsPerPage)
+                        |> List.take wordsPerPage
+                        |> List.intersperse [ ' ' ]
+                        |> List.concat
+                , userText = []
+                , startTime = Nothing
+              }
+            , Cmd.none
             )
-
-        FetchFail error ->
-            ( model, Cmd.none )
-
-        -- Load the new text. we connvert code 10 to 13 which corresponds to the ENTER key
-        FetchSucceed textList ->
-            ( Model textList [] 0 Nothing, Cmd.none )
 
         StartSucceed time ->
             ( { model | startTime = Just time }, Cmd.none )
@@ -76,9 +105,37 @@ update msg model =
                     ( model, Cmd.none )
 
                 Just startTime ->
-                    ( { model | wpm = calculateWpm (List.reverse model.userText) model.text startTime currentTime }
+                    ( { model | wpm = calculateWpm (List.reverse model.userText) model.displayedText startTime currentTime }
                     , Cmd.none
                     )
+
+        TextFetchMsg childMsg ->
+            let
+                ( newChildState, childCmd, selectedText ) =
+                    TextFetch.update childMsg model.textFetch
+
+                newModel =
+                    case selectedText of
+                        Just newText ->
+                            { model
+                                | textByWords = newText
+                                , userText = []
+                                , displayedText =
+                                    newText
+                                        |> List.take wordsPerPage
+                                        |> List.intersperse [ ' ' ]
+                                        |> List.concat
+                                , wpm = 0
+                                , page = 1
+                                , startTime = Nothing
+                            }
+
+                        Nothing ->
+                            model
+            in
+                ( { newModel | textFetch = newChildState }
+                , Cmd.map TextFetchMsg childCmd
+                )
 
 
 calculateWpm : List Char -> List Char -> Time -> Time -> Int
@@ -132,9 +189,11 @@ charachterView isNext character =
         children =
             case (Char.toCode char) of
                 32 ->
+                    --space
                     [ text (String.fromChar '␣'), wbr [] [] ]
 
                 13 ->
+                    --enter
                     [ text (String.fromChar '↵'), br [] [] ]
 
                 _ ->
@@ -155,7 +214,7 @@ view model =
                     else
                         Incorrect a
                 )
-                model.text
+                model.displayedText
                 (List.reverse model.userText)
             )
 
@@ -163,36 +222,24 @@ view model =
             List.length typed
 
         untyped =
-            model.text
+            model.displayedText
                 |> List.drop typedLength
                 |> List.map
                     (\x ->
                         Neutral x
                     )
     in
-        div []
-            [ div []
+        div [ class "typelm-container" ]
+            [ div [ class "typelm-header" ]
+                [ (text (toString model.wpm ++ " wpm"))
+                , (App.map TextFetchMsg (TextFetch.view model.textFetch))
+                ]
+            , div [ class "typelm-text" ]
                 (List.indexedMap
                     (\i x -> charachterView (i == typedLength) x)
                     (typed ++ untyped)
                 )
-            , text <| toString <| model.wpm
             ]
-
-
-
--- Init
-
-
-init : ( Model, Cmd Msg )
-init =
-    ( { text = String.toList "Hola como Estas"
-      , userText = String.toList ""
-      , wpm = 0
-      , startTime = Nothing
-      }
-    , getText "test.txt"
-    )
 
 
 
@@ -209,25 +256,21 @@ subscriptions model =
 
 
 
--- Http
+-- Init
 
 
-getText : String -> Cmd Msg
-getText file =
-    Task.perform FetchFail
-        FetchSucceed
-        ((Http.getString file)
-            |> Task.map
-                (String.toList
-                    >> List.map
-                        (\x ->
-                            if Char.toCode x == 10 then
-                                Char.fromCode 13
-                            else
-                                x
-                        )
-                )
-        )
+init : ( Model, Cmd Msg )
+init =
+    ( { textByWords = Utils.words "Hello World!"
+      , userText = String.toList ""
+      , displayedText = String.toList "Hello World!"
+      , page = 0
+      , wpm = 0
+      , startTime = Nothing
+      , textFetch = TextFetch.init
+      }
+    , Cmd.none
+    )
 
 
 
