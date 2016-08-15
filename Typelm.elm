@@ -23,7 +23,8 @@ import TextFetch
 
    In the view, the two displayedText and userText are compared to identify right and wrong entries.
 -}
---TODO: Store last page number for each text in the localStorage, So the user can continue where they left.
+--TODO: Store last page number for each text in the localStorage, So the user can continue where they left. 
+--      (The TextFetch module would provide the number along with the text)
 
 
 type alias Model =
