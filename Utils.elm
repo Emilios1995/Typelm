@@ -65,3 +65,9 @@ words xs =
                             (c :: x) :: xs
     in
         List.foldr step [ [] ] (String.toList xs)
+
+
+wordsToChars : List (List Char) -> List (Char)
+wordsToChars =
+    List.intersperse [ ' ' ]
+        >> List.concat

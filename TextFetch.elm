@@ -37,14 +37,13 @@ type Msg
     | FetchSuccess Text
     | FetchFailure Http.Error
     | TurnPage
-    | TurnPageSuccess
 
 
 wordsPerPage =
-    50
+    20
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Maybe Text )
+update : Msg -> Model -> ( Model, Cmd Msg, Maybe (List Char) )
 update msg model =
     case msg of
         Fetch url ->
@@ -53,7 +52,7 @@ update msg model =
         FetchSuccess text ->
             ( { model | page = (Just 1), selectedText = (Just text) }
             , Cmd.none
-            , Just (text |> (List.take wordsPerPage))
+            , Just (text |> (List.take wordsPerPage) |> Utils.wordsToChars)
             )
 
         FetchFailure _ ->
@@ -62,24 +61,24 @@ update msg model =
         TurnPage ->
             case ( model.selectedText, model.page ) of
                 ( Just text, Just page ) ->
-                    ( model
-                    , Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TurnPageSuccess)
-                    , Nothing
+                    ( { model | page = Just (page + 1) }
+                    , Cmd.none
+                    , let
+                        newText =
+                            text
+                                |> List.drop (page * wordsPerPage)
+                                |> List.take wordsPerPage
+                                |> Utils.wordsToChars
+                      in
+                        if List.length newText > 0 then
+                            Just newText
+                        else
+                            -- text is over
+                            Nothing
                     )
 
                 ( _, _ ) ->
                     ( model, Cmd.none, Nothing )
-
-        TurnPageSuccess ->
-            ( model
-            , Cmd.none
-            , (model.selectedText
-                |> Maybe.map
-                    (List.drop ((Maybe.withDefault 1 model.page) * wordsPerPage)
-                        >> List.take wordsPerPage
-                    )
-              )
-            )
 
 
 selectedOptionIdDecoder =

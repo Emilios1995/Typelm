@@ -104,10 +104,7 @@ update msg model =
                         Just newText ->
                             { model
                                 | userText = []
-                                , displayedText =
-                                    newText
-                                        |> List.intersperse [ ' ' ]
-                                        |> List.concat
+                                , displayedText = newText
                                 , wpm = 0
                                 , startTime = Nothing
                             }
