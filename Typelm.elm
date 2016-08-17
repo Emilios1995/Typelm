@@ -23,15 +23,13 @@ import TextFetch
 
    In the view, the two displayedText and userText are compared to identify right and wrong entries.
 -}
---TODO: Store last page number for each text in the localStorage, So the user can continue where they left. 
+--TODO: Store last page number for each text in the localStorage, So the user can continue where they left.
 --      (The TextFetch module would provide the number along with the text)
 
 
 type alias Model =
-    { textByWords : List (List Char)
-    , userText : List Char
+    { userText : List Char
     , displayedText : List Char
-    , page : Int
     , wpm : Int
     , startTime : Maybe Time
     , textFetch : TextFetch.Model
@@ -48,12 +46,11 @@ type Msg
     | StartSucceed Time
     | StartFailed
     | Tick Time
-    | TurnPage
     | TextFetchMsg TextFetch.Msg
 
 
 wordsPerPage =
-    20
+    50
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -66,7 +63,8 @@ update msg model =
               else if List.length model.userText == (List.length model.displayedText) then
                 -- The user has typed all the text on screen.
                 -- We need to wrap the call to update in a task to run it as a command.
-                Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TurnPage)
+                -- This is like simulating a msg from the TextFetch component.
+                Cmd.map TextFetchMsg (Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TextFetch.TurnPage))
               else
                 Cmd.none
             )
@@ -78,21 +76,6 @@ update msg model =
                 ( { model | userText = model.userText |> List.tail |> Maybe.withDefault [] }, Cmd.none )
             else
                 ( model, Cmd.none )
-
-        TurnPage ->
-            ( { model
-                | page = model.page + 1
-                , displayedText =
-                    model.textByWords
-                        |> List.drop (model.page * wordsPerPage)
-                        |> List.take wordsPerPage
-                        |> List.intersperse [ ' ' ]
-                        |> List.concat
-                , userText = []
-                , startTime = Nothing
-              }
-            , Cmd.none
-            )
 
         StartSucceed time ->
             ( { model | startTime = Just time }, Cmd.none )
@@ -119,15 +102,12 @@ update msg model =
                     case selectedText of
                         Just newText ->
                             { model
-                                | textByWords = newText
-                                , userText = []
+                                | userText = []
                                 , displayedText =
                                     newText
-                                        |> List.take wordsPerPage
                                         |> List.intersperse [ ' ' ]
                                         |> List.concat
                                 , wpm = 0
-                                , page = 1
                                 , startTime = Nothing
                             }
 
@@ -262,10 +242,8 @@ subscriptions model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( { textByWords = Utils.words "Hello World!"
-      , userText = String.toList ""
+    ( { userText = String.toList ""
       , displayedText = String.toList "Hello World!"
-      , page = 0
       , wpm = 0
       , startTime = Nothing
       , textFetch = TextFetch.init
