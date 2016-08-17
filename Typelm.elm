@@ -17,14 +17,11 @@ import TextFetch
 
 
 {- Overall strategy:
-   textByWords - the whole text, as List (List Char) where each inner list is a word
    userText - what the user has typed in the current page. It is backwards, so we add new chars with :: (cons)
-   displayedText - the contents of the current page. it gets recalculated when the user has typed all of it
+   displayedText - the contents of the current page. its fetching and pagination are provided by the TextFetch module.
 
    In the view, the two displayedText and userText are compared to identify right and wrong entries.
 -}
---TODO: Store last page number for each text in the localStorage, So the user can continue where they left.
---      (The TextFetch module would provide the number along with the text)
 
 
 type alias Model =

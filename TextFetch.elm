@@ -15,6 +15,9 @@ import Utils
 import List
 
 
+--TODO: Store last page number for each text in the localStorage, So the user can continue where they left.
+
+
 type alias Model =
     { options : List Option
     , selectedText : Maybe Text
