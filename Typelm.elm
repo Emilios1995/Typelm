@@ -62,9 +62,10 @@ update msg model =
                 Task.perform (\_ -> StartFailed) StartSucceed Time.now
               else if List.length model.userText == (List.length model.displayedText) then
                 -- The user has typed all the text on screen.
-                -- We need to wrap the call to update in a task to run it as a command.
-                -- This is like simulating a msg from the TextFetch component.
-                Cmd.map TextFetchMsg (Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TextFetch.TurnPage))
+                -- We need to wrap the msg in a task to run it as a command.
+                -- We run it as a TextFetchMsg, so it gets passed to TextFetch.update function by our TextFetchMsg handler
+                Cmd.map TextFetchMsg
+                    (Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TextFetch.TurnPage))
               else
                 Cmd.none
             )
