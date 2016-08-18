@@ -1,4 +1,4 @@
-module Typelm exposing (..)
+port module Typelm exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -222,12 +222,16 @@ view model =
 -- Subscription
 
 
+port pageGetter : (Int -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Keyboard.presses CharKeyMsg
         , Keyboard.downs KeyMsg
         , Time.every second Tick
+        , Sub.map TextFetchMsg (TextFetch.subscriptions pageGetter model.textFetch)
         ]
 
 

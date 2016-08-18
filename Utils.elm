@@ -2,6 +2,8 @@ module Utils exposing (..)
 
 import String
 import Char
+import String.Extra exposing (replace)
+import List.Extra exposing (dropWhile)
 
 
 foldl2 : (a -> b -> c -> c) -> c -> List a -> List b -> c
@@ -71,3 +73,20 @@ wordsToChars : List (List Char) -> List (Char)
 wordsToChars =
     List.intersperse [ ' ' ]
         >> List.concat
+
+
+dropHeaders : String -> String
+dropHeaders =
+    String.lines
+        >> dropWhile (not << String.contains "***")
+        >> List.drop 1
+        >> dropWhile (\a -> String.contains "Produced" a || String.length a < 2)
+        >> List.intersperse "\n"
+        >> String.concat
+
+
+removeExtraNewLines : String -> String
+removeExtraNewLines =
+    replace "\n\n" "$^"
+        >> replace "\n" " "
+        >> replace "$^" "\x0D"

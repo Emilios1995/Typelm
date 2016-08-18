@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
   <div id="elm-area" class="elm-area"></div>
@@ -18,6 +18,18 @@
     }
   }
   </script>
-  <script> Elm.Typelm.embed(document.getElementById("elm-area"));</script>
+  <script>
+  var app = Elm.Typelm.embed(document.getElementById("elm-area"));
+
+  app.ports.urls.subscribe((url) => {
+    var page = parseInt(localStorage.getItem(url)) || 1
+    app.ports.pageGetter.send(page);
+  });
+
+  app.ports.pageSetter.subscribe(([url, page]) => {
+    localStorage.setItem(url, page)
+  });
+
+  </script>
 </body>
 </html>

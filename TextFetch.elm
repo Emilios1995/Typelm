@@ -1,4 +1,4 @@
-module TextFetch exposing (..)
+port module TextFetch exposing (..)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -20,6 +20,7 @@ import List
 
 type alias Model =
     { options : List Option
+    , selectedOption : Maybe Option
     , selectedText : Maybe Text
     , page : Maybe Int
     }
@@ -36,36 +37,49 @@ type alias Text =
 
 
 type Msg
-    = Fetch String
+    = Fetch Option
     | FetchSuccess Text
     | FetchFailure Http.Error
     | TurnPage
+    | FetchPageSuccess Int
 
 
 wordsPerPage =
     20
 
 
+port urls : String -> Cmd msg
+
+
+port pageSetter : ( String, Int ) -> Cmd msg
+
+
 update : Msg -> Model -> ( Model, Cmd Msg, Maybe (List Char) )
 update msg model =
     case msg of
-        Fetch url ->
-            ( model, getText url, Nothing )
+        Fetch option ->
+            ( { model | selectedOption = Just option }, getText option.url, Nothing )
 
         FetchSuccess text ->
-            ( { model | page = (Just 1), selectedText = (Just text) }
-            , Cmd.none
-            , Just (text |> (List.take wordsPerPage) |> Utils.wordsToChars)
+            ( { model | selectedText = (Just (log "t" text)) }
+            , urls (Maybe.withDefault (Option " " " ") model.selectedOption).url
+            , Nothing
+            )
+
+        FetchPageSuccess page ->
+            ( { model | page = (Just (page - 1)) }
+            , Task.perform (\_ -> Debug.crash "This failure cannot happen.") identity (Task.succeed TurnPage)
+            , Nothing
             )
 
         FetchFailure _ ->
             ( model, Cmd.none, Nothing )
 
         TurnPage ->
-            case ( model.selectedText, model.page ) of
-                ( Just text, Just page ) ->
+            case ( model.selectedOption, model.selectedText, model.page ) of
+                ( Just option, Just text, Just page ) ->
                     ( { model | page = Just (page + 1) }
-                    , Cmd.none
+                    , pageSetter ( option.url, (page + 1) )
                     , let
                         newText =
                             text
@@ -80,20 +94,23 @@ update msg model =
                             Nothing
                     )
 
-                ( _, _ ) ->
+                ( _, _, _ ) ->
                     ( model, Cmd.none, Nothing )
 
 
-selectedOptionIdDecoder =
-    at [ "target", "selectedOptions", "0", "id" ] string
+selectedOptionDecoder =
+    Json.Decode.object2
+        Option
+        (at [ "target", "selectedOptions", "0", "id" ] string)
+        (at [ "target", "selectedOptions", "0", "value" ] string)
 
 
 view : Model -> Html Msg
 view model =
-    select [ on "change" (Json.Decode.map Fetch selectedOptionIdDecoder) ]
+    select [ on "change" (Json.Decode.map Fetch selectedOptionDecoder) ]
         (List.map
             (\opt ->
-                option [ id opt.url ] [ text opt.name ]
+                option [ id opt.url, value opt.name ] [ text opt.name ]
             )
             model.options
         )
@@ -102,15 +119,25 @@ view model =
 init =
     Model
         [ { name = "Select a Text...", url = "/nothig.txt" }
-        , { name = "Pride and Perjudice", url = "/test.txt" }
+        , { name = "Pride and Perjudice", url = "/books/pride.txt" }
+        , { name = "The Picture of Dorian Gray", url = "/books/dorian.txt" }
         ]
         Nothing
         Nothing
+        Nothing
 
 
 
--- This will return the text divided by words.
--- It will also convert \n to \r which is what the ENTER key produces.
+-- SUBSCRIPTIONS
+
+
+subscriptions : ((Int -> Msg) -> Sub Msg) -> Model -> Sub Msg
+subscriptions pageGetter model =
+    pageGetter FetchPageSuccess
+
+
+
+-- HTTP
 
 
 getText : String -> Cmd Msg
@@ -119,8 +146,5 @@ getText file =
         FetchSuccess
         ((Http.getString file)
             |> Task.map
-                (Utils.words
-                    >> List.map
-                        (List.map Utils.lfToCr)
-                )
+                (Utils.dropHeaders >> Utils.removeExtraNewLines >> Utils.words)
         )
