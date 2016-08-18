@@ -35,18 +35,6 @@ isSpace x =
 
 
 
--- Cr (13) is the char produced by the enter key.
-
-
-lfToCr : Char -> Char
-lfToCr x =
-    if Char.toCode x == 10 then
-        Char.fromCode 13
-    else
-        x
-
-
-
 -- String.words doesn't keep the line brakes. This implementation does.
 -- Another difference is that it'll return a (List (List Char)) rahter than a (List String)
 
@@ -74,7 +62,7 @@ wordsToChars =
     List.intersperse [ ' ' ]
         >> List.concat
 
-
+-- Texts from Project Gutenberg have some metadata at the begginning. This function removes them.
 dropHeaders : String -> String
 dropHeaders =
     String.lines
@@ -84,7 +72,8 @@ dropHeaders =
         >> List.intersperse "\n"
         >> String.concat
 
-
+-- Texts from Project Gutenberg have a new line each 70 chars. This functions removes those and only keeps the original ones,
+-- which are identified by consisting of two \n chars.
 removeExtraNewLines : String -> String
 removeExtraNewLines =
     replace "\n\n" "$^"
