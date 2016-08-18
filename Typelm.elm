@@ -102,7 +102,6 @@ update msg model =
                             { model
                                 | userText = []
                                 , displayedText = newText
-                                , wpm = 0
                                 , startTime = Nothing
                             }
 
