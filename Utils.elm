@@ -41,20 +41,20 @@ isSpace x =
 
 words : String -> List (List Char)
 words xs =
-    let
-        step =
-            \c acc ->
-                case acc of
-                    [] ->
-                        []
+    List.foldr
+        (\c acc ->
+            case acc of
+                [] ->
+                    []
 
-                    x :: xs ->
-                        if isSpace c then
-                            ([] :: acc)
-                        else
-                            (c :: x) :: xs
-    in
-        List.foldr step [ [] ] (String.toList xs)
+                x :: xs ->
+                    if isSpace c then
+                        ([] :: acc)
+                    else
+                        (c :: x) :: xs
+        )
+        [ [] ]
+        (String.toList xs)
 
 
 wordsToChars : List (List Char) -> List (Char)
@@ -62,7 +62,11 @@ wordsToChars =
     List.intersperse [ ' ' ]
         >> List.concat
 
+
+
 -- Texts from Project Gutenberg have some metadata at the begginning. This function removes them.
+
+
 dropHeaders : String -> String
 dropHeaders =
     String.lines
@@ -72,8 +76,12 @@ dropHeaders =
         >> List.intersperse "\n"
         >> String.concat
 
--- Texts from Project Gutenberg have a new line each 70 chars. This functions removes those and only keeps the original ones,
+
+
+-- Texts from Project Gutenberg have a new line each 70 chars. This function removes those and only keeps the original ones,
 -- which are identified by consisting of two \n chars.
+
+
 removeExtraNewLines : String -> String
 removeExtraNewLines =
     replace "\n\n" "$^"

@@ -238,10 +238,15 @@ subscriptions model =
 -- Init
 
 
+initialText : String
+initialText =
+    "Select a book and start typing.\x0DYour progress on it will be saved."
+
+
 init : ( Model, Cmd Msg )
 init =
     ( { userText = String.toList ""
-      , displayedText = String.toList "Hello World!"
+      , displayedText = String.toList initialText
       , wpm = 0
       , startTime = Nothing
       , textFetch = TextFetch.init

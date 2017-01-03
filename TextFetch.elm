@@ -118,7 +118,7 @@ view model =
 
 init =
     Model
-        [ { name = "Select a Text...", url = "/nothig.txt" }
+        [ { name = "Select a book..", url = "/nothig.txt" }
         , { name = "Pride and Perjudice", url = "/books/pride.txt" }
         , { name = "The Picture of Dorian Gray", url = "/books/dorian.txt" }
         ]

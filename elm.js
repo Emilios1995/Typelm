@@ -11139,37 +11139,31 @@ var _user$project$Utils$wordsToChars = function (_p3) {
 				]),
 			_p3));
 };
-var _user$project$Utils$lfToCr = function (x) {
-	return _elm_lang$core$Native_Utils.eq(
-		_elm_lang$core$Char$toCode(x),
-		10) ? _elm_lang$core$Char$fromCode(13) : x;
-};
 var _user$project$Utils$isSpace = function (x) {
 	return _elm_lang$core$Native_Utils.eq(
 		_elm_lang$core$Char$toCode(x),
 		32) ? true : false;
 };
 var _user$project$Utils$words = function (xs) {
-	var step = F2(
-		function (c, acc) {
-			var _p4 = acc;
-			if (_p4.ctor === '[]') {
-				return _elm_lang$core$Native_List.fromArray(
-					[]);
-			} else {
-				return _user$project$Utils$isSpace(c) ? A2(
-					_elm_lang$core$List_ops['::'],
-					_elm_lang$core$Native_List.fromArray(
-						[]),
-					acc) : A2(
-					_elm_lang$core$List_ops['::'],
-					A2(_elm_lang$core$List_ops['::'], c, _p4._0),
-					_p4._1);
-			}
-		});
 	return A3(
 		_elm_lang$core$List$foldr,
-		step,
+		F2(
+			function (c, acc) {
+				var _p4 = acc;
+				if (_p4.ctor === '[]') {
+					return _elm_lang$core$Native_List.fromArray(
+						[]);
+				} else {
+					return _user$project$Utils$isSpace(c) ? A2(
+						_elm_lang$core$List_ops['::'],
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						acc) : A2(
+						_elm_lang$core$List_ops['::'],
+						A2(_elm_lang$core$List_ops['::'], c, _p4._0),
+						_p4._1);
+				}
+			}),
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_elm_lang$core$Native_List.fromArray(
@@ -11225,7 +11219,7 @@ var _user$project$TextFetch$init = A4(
 	_user$project$TextFetch$Model,
 	_elm_lang$core$Native_List.fromArray(
 		[
-			{name: 'Select a Text...', url: '/nothig.txt'},
+			{name: 'Select a book..', url: '/nothig.txt'},
 			{name: 'Pride and Perjudice', url: '/books/pride.txt'},
 			{name: 'The Picture of Dorian Gray', url: '/books/dorian.txt'}
 		]),
@@ -11393,11 +11387,12 @@ var _user$project$TextFetch$view = function (model) {
 			model.options));
 };
 
+var _user$project$Typelm$initialText = 'Select a book and start typing.\rYour progress on it will be saved.';
 var _user$project$Typelm$init = {
 	ctor: '_Tuple2',
 	_0: {
 		userText: _elm_lang$core$String$toList(''),
-		displayedText: _elm_lang$core$String$toList('Hello World!'),
+		displayedText: _elm_lang$core$String$toList(_user$project$Typelm$initialText),
 		wpm: 0,
 		startTime: _elm_lang$core$Maybe$Nothing,
 		textFetch: _user$project$TextFetch$init
